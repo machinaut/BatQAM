@@ -26,9 +26,11 @@
 
 /* Timer 2 count period, 16 microseconds for a 72MHz APB2 clock */
 #define PERIOD 1152
+//#define PERIOD 500 // about the fastest we can go right now
 
 /* Globals */
-uint8_t waveform[256];
+uint8_t waveform1[256];
+uint8_t waveform2[256];
 
 /*--------------------------------------------------------------------*/
 static void clock_setup(void)
@@ -45,8 +47,9 @@ static void gpio_setup(void)
 	/* Set the digital test output on PC1 */
 	gpio_mode_setup(GPIOC, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO1);
 	gpio_set_output_options(GPIOC, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, GPIO1);
-	/* Set PA4 for DAC channel 1 to analogue, ignoring drive mode. */
+	/* Set PA4/PA5 for DAC channel 1/2 to analogue, ignoring drive mode. */
 	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO4);
+	gpio_mode_setup(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO5);
 }
 
 /*--------------------------------------------------------------------*/
@@ -80,24 +83,35 @@ static void dma_setup(void)
 	/* DAC channel 1 uses DMA controller 1 Stream 5 Channel 7. */
 	/* Enable DMA1 clock and IRQ */
 	rcc_periph_clock_enable(RCC_DMA1);
-	nvic_enable_irq(NVIC_DMA1_STREAM5_IRQ);
 	dma_stream_reset(DMA1, DMA_STREAM5);
+	dma_stream_reset(DMA1, DMA_STREAM6);
 	dma_set_priority(DMA1, DMA_STREAM5, DMA_SxCR_PL_LOW);
+	dma_set_priority(DMA1, DMA_STREAM6, DMA_SxCR_PL_LOW);
 	dma_set_memory_size(DMA1, DMA_STREAM5, DMA_SxCR_MSIZE_8BIT);
+	dma_set_memory_size(DMA1, DMA_STREAM6, DMA_SxCR_MSIZE_8BIT);
 	dma_set_peripheral_size(DMA1, DMA_STREAM5, DMA_SxCR_PSIZE_8BIT);
+	dma_set_peripheral_size(DMA1, DMA_STREAM6, DMA_SxCR_PSIZE_8BIT);
 	dma_enable_memory_increment_mode(DMA1, DMA_STREAM5);
+	dma_enable_memory_increment_mode(DMA1, DMA_STREAM6);
 	dma_enable_circular_mode(DMA1, DMA_STREAM5);
+	dma_enable_circular_mode(DMA1, DMA_STREAM6);
 	dma_set_transfer_mode(DMA1, DMA_STREAM5,
+				DMA_SxCR_DIR_MEM_TO_PERIPHERAL);
+	dma_set_transfer_mode(DMA1, DMA_STREAM6,
 				DMA_SxCR_DIR_MEM_TO_PERIPHERAL);
 	/* The register to target is the DAC1 8-bit right justified data
 	   register */
 	dma_set_peripheral_address(DMA1, DMA_STREAM5, (uint32_t) &DAC_DHR8R1);
+	dma_set_peripheral_address(DMA1, DMA_STREAM6, (uint32_t) &DAC_DHR8R2);
 	/* The array v[] is filled with the waveform data to be output */
-	dma_set_memory_address(DMA1, DMA_STREAM5, (uint32_t) waveform);
+	dma_set_memory_address(DMA1, DMA_STREAM5, (uint32_t) waveform1);
+	dma_set_memory_address(DMA1, DMA_STREAM6, (uint32_t) waveform2);
 	dma_set_number_of_data(DMA1, DMA_STREAM5, 256);
-	dma_enable_transfer_complete_interrupt(DMA1, DMA_STREAM5);
+	dma_set_number_of_data(DMA1, DMA_STREAM6, 256);
 	dma_channel_select(DMA1, DMA_STREAM5, DMA_SxCR_CHSEL_7);
+	dma_channel_select(DMA1, DMA_STREAM6, DMA_SxCR_CHSEL_7);
 	dma_enable_stream(DMA1, DMA_STREAM5);
+	dma_enable_stream(DMA1, DMA_STREAM6);
 }
 
 /*--------------------------------------------------------------------*/
@@ -105,24 +119,16 @@ static void dac_setup(void)
 {
 	/* Enable the DAC clock on APB1 */
 	rcc_periph_clock_enable(RCC_DAC);
-	/* Setup the DAC channel 1, with timer 2 as trigger source.
+	/* Setup the DAC channels 1 & 2, with timer 2 as trigger source.
 	 * Assume the DAC has woken up by the time the first transfer occurs */
 	dac_trigger_enable(CHANNEL_1);
+	dac_trigger_enable(CHANNEL_2);
 	dac_set_trigger_source(DAC_CR_TSEL1_T2);
+	dac_set_trigger_source(DAC_CR_TSEL2_T2);
 	dac_dma_enable(CHANNEL_1);
+	dac_dma_enable(CHANNEL_2);
 	dac_enable(CHANNEL_1);
-}
-
-/*--------------------------------------------------------------------*/
-/* The ISR simply provides a test output for a CRO trigger */
-
-void dma1_stream5_isr(void)
-{
-	if (dma_get_interrupt_flag(DMA1, DMA_STREAM5, DMA_TCIF)) {
-		dma_clear_interrupt_flags(DMA1, DMA_STREAM5, DMA_TCIF);
-		/* Toggle PC1 just to keep aware of activity and frequency. */
-		gpio_toggle(GPIOC, GPIO1);
-	}
+	dac_enable(CHANNEL_2);
 }
 
 /*--------------------------------------------------------------------*/
@@ -145,7 +151,8 @@ int main(void)
 		} else {
 			x = 0;
 		}
-		waveform[i] = x;
+                waveform1[i] = x;       // BAT!
+                waveform2[i] = 255 - x; // UPSIDE DOWN BAT!
 	}
 	clock_setup();
 	gpio_setup();

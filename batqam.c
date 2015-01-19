@@ -105,8 +105,8 @@ static void dma_setup(void)
 	/* The array v[] is filled with the waveform data to be output */
 	dma_set_memory_address(DMA1, DMA_STREAM5, (uint32_t) waveform1);
 	dma_set_memory_address(DMA1, DMA_STREAM6, (uint32_t) waveform2);
-	dma_set_number_of_data(DMA1, DMA_STREAM5, 256);
-	dma_set_number_of_data(DMA1, DMA_STREAM6, 256);
+	dma_set_number_of_data(DMA1, DMA_STREAM5, bufsize);
+	dma_set_number_of_data(DMA1, DMA_STREAM6, bufsize);
 	dma_channel_select(DMA1, DMA_STREAM5, DMA_SxCR_CHSEL_7);
 	dma_channel_select(DMA1, DMA_STREAM6, DMA_SxCR_CHSEL_7);
 	dma_enable_stream(DMA1, DMA_STREAM5);

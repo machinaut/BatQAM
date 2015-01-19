@@ -23,3 +23,4 @@ print "};"
 print "uint8_t waveform2[%d] = {" % bufsize ,
 print ",".join([str(f2v(y(n2t(i)))) for i in range(bufsize)]) ,
 print "};"
+print "int bufsize = %d;" % bufsize

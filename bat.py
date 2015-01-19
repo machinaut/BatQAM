@@ -3,7 +3,7 @@
 import math
 
 bufsize = 64 # Resolution in time (number of samples per cycle)
-scale = 256 # Resolution in terms of output values (maximum is scale-1)
+scale = 1<<12 # Resolution in terms of output values (maximum is scale-1)
 
 # Convert between n (integer number of sample) and t (float value between 0,1)
 n2t = lambda n: float(i) / float(bufsize)
@@ -47,11 +47,11 @@ baty = [(y - offsety) / normscale for y in baty]
 
 print "/* AUTO GENERATED HEADER - run `sin.py > bat.h` to generate */"
 # X values buffer
-print "uint8_t waveform1[%d] = {" % bufsize
+print "uint16_t waveform1[%d] = {" % bufsize
 print ",".join([str(f2v(x)) for x in batx]) ,
 print "};"
 # Y values buffer
-print "uint8_t waveform2[%d] = {" % bufsize
+print "uint16_t waveform2[%d] = {" % bufsize
 print ",".join([str(f2v(y)) for y in baty]) ,
 print "};"
 print "int bufsize = %d;" % bufsize

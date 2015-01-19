@@ -3,7 +3,7 @@
 import math
 
 bufsize = 256 # Resolution in time (number of samples per cycle)
-scale = 256 # Resolution in terms of output values (maximum is scale-1)
+scale = 1<<12 # Resolution in terms of output values (maximum is scale-1)
 
 # X and Y parametric functions in terms of t time samples, between [0.0,1.0)
 x = lambda t: 0.5 + 0.5 * math.sin(2 * math.pi * t) # returns between [0.0,1.0]
@@ -16,11 +16,11 @@ f2v = lambda f: min(int( f * scale), scale-1) # clip exactly 1.0 value
 
 print "/* AUTO GENERATED HEADER - run `sin.py > bat.h` to generate */"
 # X values buffer
-print "uint8_t waveform1[%d] = {" % bufsize ,
+print "uint16_t waveform1[%d] = {" % bufsize ,
 print ",".join([str(f2v(x(n2t(i)))) for i in range(bufsize)]) ,
 print "};"
 # Y values buffer
-print "uint8_t waveform2[%d] = {" % bufsize ,
+print "uint16_t waveform2[%d] = {" % bufsize ,
 print ",".join([str(f2v(y(n2t(i)))) for i in range(bufsize)]) ,
 print "};"
 print "int bufsize = %d;" % bufsize

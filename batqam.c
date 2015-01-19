@@ -86,10 +86,10 @@ static void dma_setup(void)
 	dma_stream_reset(DMA1, DMA_STREAM6);
 	dma_set_priority(DMA1, DMA_STREAM5, DMA_SxCR_PL_LOW);
 	dma_set_priority(DMA1, DMA_STREAM6, DMA_SxCR_PL_LOW);
-	dma_set_memory_size(DMA1, DMA_STREAM5, DMA_SxCR_MSIZE_8BIT);
-	dma_set_memory_size(DMA1, DMA_STREAM6, DMA_SxCR_MSIZE_8BIT);
-	dma_set_peripheral_size(DMA1, DMA_STREAM5, DMA_SxCR_PSIZE_8BIT);
-	dma_set_peripheral_size(DMA1, DMA_STREAM6, DMA_SxCR_PSIZE_8BIT);
+	dma_set_memory_size(DMA1, DMA_STREAM5, DMA_SxCR_MSIZE_16BIT);
+	dma_set_memory_size(DMA1, DMA_STREAM6, DMA_SxCR_MSIZE_16BIT);
+	dma_set_peripheral_size(DMA1, DMA_STREAM5, DMA_SxCR_PSIZE_16BIT);
+	dma_set_peripheral_size(DMA1, DMA_STREAM6, DMA_SxCR_PSIZE_16BIT);
 	dma_enable_memory_increment_mode(DMA1, DMA_STREAM5);
 	dma_enable_memory_increment_mode(DMA1, DMA_STREAM6);
 	dma_enable_circular_mode(DMA1, DMA_STREAM5);
@@ -98,10 +98,9 @@ static void dma_setup(void)
 				DMA_SxCR_DIR_MEM_TO_PERIPHERAL);
 	dma_set_transfer_mode(DMA1, DMA_STREAM6,
 				DMA_SxCR_DIR_MEM_TO_PERIPHERAL);
-	/* The register to target is the DAC1 8-bit right justified data
-	   register */
-	dma_set_peripheral_address(DMA1, DMA_STREAM5, (uint32_t) &DAC_DHR8R1);
-	dma_set_peripheral_address(DMA1, DMA_STREAM6, (uint32_t) &DAC_DHR8R2);
+	/* The target is the DAC 12-bit right justified data register */
+	dma_set_peripheral_address(DMA1, DMA_STREAM5, (uint32_t) &DAC_DHR12R1);
+	dma_set_peripheral_address(DMA1, DMA_STREAM6, (uint32_t) &DAC_DHR12R2);
 	/* The array v[] is filled with the waveform data to be output */
 	dma_set_memory_address(DMA1, DMA_STREAM5, (uint32_t) waveform1);
 	dma_set_memory_address(DMA1, DMA_STREAM6, (uint32_t) waveform2);
@@ -134,7 +133,7 @@ static void dac_setup(void)
 int main(void)
 {
 	/* Fill the array with funky waveform data */
-	/* This is for dual channel 8-bit right aligned */
+	/* This is for dual channel 12-bit right aligned */
 	clock_setup();
 	gpio_setup();
 	timer_setup();
